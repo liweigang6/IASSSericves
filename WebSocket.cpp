@@ -123,7 +123,6 @@ int UnCompressing(char *Unzfilepath, vector<string> &zipfilelist)
 		std::size_t p = file.find('/');
 		if(p!=std::string::npos)
 		{
-			std::cout << dev << std::endl;
 			char des[1024]= {0};
 			strncpy(des, file.c_str(), p);
 			string s;
@@ -706,7 +705,6 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	string yun_addr=root["yun_addr"].asString();
 	string url;
 	url.assign(yun_addr).append("/slice/asreport/analyseNotice.shtml");
-	cout <<  url << endl;
 	string asreportId= root["asreportid"].asString();
 	string result;
 	CStateReport sr(url);
@@ -848,10 +846,7 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	//按照文件名称开始匹配，进行分析操作
 	vector<string> orifileList;//定义一个存放结果文件名称的链表
 	vector<string> newfilelist;	
-	vector<string> checkfilepath;
 	vector<string> searceshlist;
-	char checkfilename[MAX_PATH] = {0};
-	char newpath[MAX_PATH] = {0};  //解压缩的新文件目录
 	if(zipfilelist.size() == 0)
 	{
 		WriteToLog("ERROR:解压目录文件为空");
@@ -866,6 +861,7 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		}
 		return;
 	}
+	char newpath[MAX_PATH] = {0};  //解压缩的新文件目录
 	for(int i=0; i<(int)zipfilelist.size(); i++)
 	{
 		if(zipfilelist[i].find("new.zip", 0) != string::npos)
@@ -885,37 +881,13 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		}
 	}
 
-	char checkpath[MAX_PATH] = {0};
-	char outSHA1[MAX_PATH] = {0};
-	char outSHA2[MAX_PATH] = {0};
 	char Error[MAX_PATH] = {0};
 	char newPath[MAX_PATH] = {0};
-	char filename[MAX_PATH] = {0};
 	//得到新下载目录下文件名称
 	GetFileName(oripath, orifileList);
 	GetFileName(newpath, newfilelist);
 
-	strcpy(filename, orifileList[0].c_str());
-	char *d = strrchr(filename, '\\');
-	sprintf(checkfilename, "%s", d+1);
-	char filesha1[MAX_PATH]={0};
-	strcpy(filesha1, orifileList[0].c_str());
-	//得到其中一个文件的hash值
-	GetFileSHA1(filesha1, outSHA1, Error);
-	if(strlen(Error) != 0)
-	{
-		WriteToLog("ERROR:GetFileHash1 error");
-		int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
-		if(code != 0)
-		{
-			WriteToLog("ERROR:分析失败");
-		}
-		else
-		{
-			WriteToLog("DEBUG:分析成功");
-		}
-		return;
-	}
+
 
 	
 	strcpy(newPath, dcppath.c_str());
@@ -1052,10 +1024,10 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 	string yun_addr=root["yun_addr"].asString();
 	string url;
 	url.assign(yun_addr).append("/slice/asreport/reportNotice.shtml");
-	cout <<  url << endl;
 	string asreportId= root["asreportid"].asString();
 	string result;
 	CStateReport sr(url);
+	string downloadurl= root["downloadurl"].asString();
 	
 
 	//自动匹配盘符
@@ -1125,10 +1097,7 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 	//按照文件名称开始匹配，进行分析操作
 	vector<string> orifileList;  //定义一个存放结果文件名称的链表
 	vector<string> newfilelist;	
-	vector<string> checkfilepath;
 	vector<string> searceshlist;
-	char checkfilename[MAX_PATH] = {0};
-	char newpath[MAX_PATH] = {0};  //解压缩的新文件目录
 	string NewPath;
 	NewPath.assign(zipdlpathname).append(dcpuuid);
 	char zippath[MAX_PATH]={0};
@@ -1138,137 +1107,36 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 	if(zipfilelist.size() == 0)
 	{
 		WriteToLog("ERROR:解压目录文件为空");
-		int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
-		if(code != 0)
+		string dirdcpuuid;
+		dirdcpuuid.assign(zipdlpathname).append(dcpuuid).append(".zip");
+		char zipfilepath[MAX_PATH] = {0};
+		strcpy(zipfilepath, dirdcpuuid.c_str());
+		char download[MAX_PATH]={0};
+		strcpy(download, downloadurl.c_str());
+		HRESULT hr = URLDownloadToFile(0, download, zipfilepath, 0, NULL);
+		if(hr == S_OK)
 		{
-			WriteToLog("ERROR:上报失败");
+			WriteToLog("DEBUG:下载完成");
 		}
 		else
 		{
-			WriteToLog("DEBUG:上报成功");
+				WriteToLog("ERROR:下载失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
 		}
-		return;
-	}
-	for(int i=0;i<(int)zipfilelist.size();i++)
-	{
-		if(zipfilelist[i].find("new.zip", 0) != string::npos)
+		//开始解压压缩包
+		vector<string> zipfilelist;
+		if(UnCompressing(zipfilepath, zipfilelist) != 0)
 		{
-			NewPath.assign(zipfilelist[i]);
-			break;
-		}
-	}
-	strncpy(newpath, NewPath.c_str(), strlen(NewPath.c_str())-strlen(".zip"));
-	char oripath[MAX_PATH] = {0};  //解压缩的旧文件目录
-	string OldPath;
-	for(int i=0;i<(int)zipfilelist.size();i++)
-	{
-		if(zipfilelist[i].find("old.zip", 0) != string::npos)
-		{
-			OldPath.assign(zipfilelist[i]);
-			break;
-		}
-	}
-	strncpy(oripath, OldPath.c_str(), strlen(OldPath.c_str())-strlen(".zip"));
-	char checkpath[MAX_PATH] = {0};
-	char outSHA1[MAX_PATH] = {0};
-	char outSHA2[MAX_PATH] = {0};
-	char Error[MAX_PATH] = {0};
-	char newPath[MAX_PATH] = {0};
-	char filename[MAX_PATH] = {0};
-
-	//得到新下载目录下文件名称
-	GetFileName(oripath, orifileList);
-	GetFileName(newpath, newfilelist);
-	strcpy(filename, newfilelist[0].c_str());
-	char *d = strrchr(filename, '\\');
-	sprintf(checkfilename, "%s", d+1);
-	char filesha1[MAX_PATH]={0};
-	strcpy(filesha1, orifileList[0].c_str());
-	//得到其中一个文件的hash值
-	GetFileSHA1(filesha1, outSHA1, Error);
-	if(strlen(Error) != 0)
-	{
-		WriteToLog("ERROR:GET outSHA1 error");
-		int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
-		if(code != 0)
-		{
-			WriteToLog("ERROR:上报失败");
-		}
-		else
-		{
-			WriteToLog("DEBUG:上报成功");
-		}
-		return;
-	}
-
-	
-	strcpy(newPath, dcppath.c_str());
-
-
-	for(int j=0;j<(int)newfilelist.size();j++)
-	{
-		char filename[MAX_PATH]={0};
-		char filepathname[MAX_PATH]={0};
-		strcpy(filepathname, newfilelist[j].c_str());
-		char *d = strrchr(filepathname, '\\');
-		sprintf(filename, "%s", d+1);
-		FindFile(filename, newPath, searceshlist);
-	}
-	if(searceshlist.size() == 0)
-	{
-		WriteToLog("ERROR:搜索文件搜索失败");
-		int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
-		if(code != 0)
-		{
-			WriteToLog("ERROR:上报失败");
-		}
-		else
-		{
-			WriteToLog("DEBUG:上报成功");
-		}
-		return;
-	}
-	for(int i=0;i < (int)newfilelist.size();i++)
-	{
-		char outSHA3[MAX_PATH] = {0};
-		char outSHA4[MAX_PATH] = {0};
-		char filepathname[MAX_PATH]={0};
-		strcpy(filepathname, newfilelist[i].c_str());
-		GetFileSHA1(filepathname, outSHA3, Error);
-		if(strlen(Error) != 0)
-		{
-			WriteToLog("ERROR:GetFileHash3 error");
-			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
-			if(code != 0)
-			{
-				WriteToLog("ERROR:上报失败");
-			}
-			else
-			{
-				WriteToLog("DEBUG:上报成功");
-			}
-			return;
-		}
-		char searech[MAX_PATH]={0};
-		strcpy(searech, searceshlist[i].c_str());
-		GetFileSHA1(searech, outSHA4, Error);
-		if(strlen(Error) != 0)
-		{
-			WriteToLog("ERROR:GetFileHash4 error");
-			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
-			if(code != 0)
-			{
-				WriteToLog("ERROR:上报失败");
-			}
-			else
-			{
-				WriteToLog("DEBUG:上报成功");
-			}
-			return;
-		}
-		if(strcmp(outSHA3, outSHA4) != 0)
-		{
-			WriteToLog("ERROR:文件hash值匹配失败");
+			WriteToLog("ERROR:解压失败");
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1282,18 +1150,35 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		}
 		else
 		{
-			WriteToLog("DEBUG:文件hash值匹配成功");
+			WriteToLog("DEBUG:解压开始");
 		}
-	}
-	for(int i=0;i < (int)orifileList.size();i++)
-	{
-		char l[MAX_PATH]= {0};
-		strcpy(l, orifileList[i].c_str());
-		char searech[MAX_PATH]={0};
-		strcpy(searech, searceshlist[i].c_str());
-		if(CopyFile(l, searech, FALSE) == 0)
+		vector<string> dirzipfilelist;
+		for(int i=0;i<(int)zipfilelist.size();i++)
 		{
-			WriteToLog("ERROR:覆盖失败");
+			char zippath[1024]={0};
+			strcpy(zippath, zipfilelist[i].c_str());
+			if(UnCompressing(zippath, dirzipfilelist) != 0)
+			{
+				WriteToLog("ERROR:解压失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+		}
+		if(dirzipfilelist.size() == 0)
+		{
+			WriteToLog("DEBUG:解压成功");
+		}
+		if(zipfilelist.size() == 0)
+		{
+			WriteToLog("ERROR:解压目录文件为空");
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1305,9 +1190,277 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			}
 			return;
 		}
-		else
+		char newpath[MAX_PATH] = {0};  //解压缩的新文件目录
+		for(int i=0; i<(int)zipfilelist.size(); i++)
 		{
-			WriteToLog("DEBUG:覆盖成功");
+			if(zipfilelist[i].find("new.zip", 0) != string::npos)
+			{
+				strncpy(newpath, zipfilelist[0].c_str(), strlen(zipfilelist[i].c_str())-strlen(".zip"));
+				break;
+			}
+		}
+		char oripath[MAX_PATH] = {0};  //解压缩的旧文件目录
+		for(int i=0; i<(int)zipfilelist.size(); i++)
+		{
+			if(zipfilelist[i].find("old.zip", 0) != string::npos)
+			{
+				strncpy(oripath, zipfilelist[i].c_str(), strlen(zipfilelist[i].c_str())-strlen(".zip"));
+				break;
+			}
+		}
+		char Error[MAX_PATH] = {0};
+		char newPath[MAX_PATH] = {0};
+		//得到新下载目录下文件名称
+		GetFileName(oripath, orifileList);
+		GetFileName(newpath, newfilelist);
+		//得到匹配的文件目录
+		strcpy(newPath, dcppath.c_str());
+		//按照名字查找指定路径下的同名文件
+		for(int j=0;j<(int)newfilelist.size();j++)
+		{
+			char filename[MAX_PATH]={0};
+			char filepathname[MAX_PATH]={0};
+			strcpy(filepathname, newfilelist[j].c_str());
+			char *d = strrchr(filepathname, '\\');
+			sprintf(filename, "%s", d+1);
+			FindFile(filename, newPath, searceshlist);
+		}
+		if(searceshlist.size() == 0)
+		{
+			WriteToLog("ERROR:匹配查找的文件夹为空");
+			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+			if(code != 0)
+			{
+				WriteToLog("ERROR:上报失败");
+			}
+			else
+			{
+				WriteToLog("DEBUG:上报成功");
+			}
+			return;
+		}
+		//匹配hash
+		for(int i=0;i < (int)newfilelist.size();i++)
+		{
+			char outSHA3[MAX_PATH] = {0};
+			char outSHA4[MAX_PATH] = {0};
+			char filepathname[MAX_PATH]={0};
+			strcpy(filepathname, newfilelist[i].c_str());
+			GetFileSHA1(filepathname, outSHA3, Error);
+			if(strlen(Error) != 0)
+			{
+				WriteToLog("ERROR:GetFileHash3 error");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			char searech[MAX_PATH]={0};
+			strcpy(searech, searceshlist[i].c_str());
+			GetFileSHA1(searech, outSHA4, Error);
+			if(strlen(Error) != 0)
+			{
+				WriteToLog("ERROR:GetFileHash4 error");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			if(strcmp(outSHA3, outSHA4) != 0)
+			{
+				WriteToLog("ERROR:文件hash值匹配失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			else
+			{
+				WriteToLog("DEBUG:文件hash值匹配成功");
+			}
+		}
+		//覆盖文件
+		for(int i=0;i < (int)orifileList.size();i++)
+		{
+			char l[MAX_PATH]= {0};
+			strcpy(l, orifileList[i].c_str());
+			char searech[MAX_PATH]={0};
+			strcpy(searech, searceshlist[i].c_str());
+			if(CopyFile(l, searech, FALSE) == 0)
+			{
+				WriteToLog("ERROR:文件覆盖失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			else
+			{
+				WriteToLog("DEBUG:文件覆盖成功");
+			}
+		}
+	}
+	else
+	{
+		char newpath[MAX_PATH] = {0};  //解压缩的新文件目录
+		for(int i=0;i<(int)zipfilelist.size();i++)
+		{
+			if(zipfilelist[i].find("new.zip", 0) != string::npos)
+			{
+				NewPath.assign(zipfilelist[i]);
+				break;
+			}
+		}
+		strncpy(newpath, NewPath.c_str(), strlen(NewPath.c_str())-strlen(".zip"));
+		char oripath[MAX_PATH] = {0};  //解压缩的旧文件目录
+		string OldPath;
+		for(int i=0;i<(int)zipfilelist.size();i++)
+		{
+			if(zipfilelist[i].find("old.zip", 0) != string::npos)
+			{
+				OldPath.assign(zipfilelist[i]);
+				break;
+			}
+		}
+		strncpy(oripath, OldPath.c_str(), strlen(OldPath.c_str())-strlen(".zip"));
+		char Error[MAX_PATH] = {0};
+		char newPath[MAX_PATH] = {0};
+		//得到新下载目录下文件名称
+		GetFileName(oripath, orifileList);
+		GetFileName(newpath, newfilelist);
+		//得到指定目录
+		strcpy(newPath, dcppath.c_str());
+		//按照文件名在指定目录下查找
+		for(int j=0;j<(int)newfilelist.size();j++)
+		{
+			char filename[MAX_PATH]={0};
+			char filepathname[MAX_PATH]={0};
+			strcpy(filepathname, newfilelist[j].c_str());
+			char *d = strrchr(filepathname, '\\');
+			sprintf(filename, "%s", d+1);
+			FindFile(filename, newPath, searceshlist);
+		}
+		if(searceshlist.size() == 0)
+		{
+			WriteToLog("ERROR:搜索文件搜索失败");
+			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+			if(code != 0)
+			{
+				WriteToLog("ERROR:上报失败");
+			}
+			else
+			{
+				WriteToLog("DEBUG:上报成功");
+			}
+			return;
+		}
+		//开始匹配文件HASH
+		for(int i=0;i < (int)newfilelist.size();i++)
+		{
+			char outSHA3[MAX_PATH] = {0};
+			char outSHA4[MAX_PATH] = {0};
+			char filepathname[MAX_PATH]={0};
+			strcpy(filepathname, newfilelist[i].c_str());
+			GetFileSHA1(filepathname, outSHA3, Error);
+			if(strlen(Error) != 0)
+			{
+				WriteToLog("ERROR:GetFileHash3 error");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			char searech[MAX_PATH]={0};
+			strcpy(searech, searceshlist[i].c_str());
+			GetFileSHA1(searech, outSHA4, Error);
+			if(strlen(Error) != 0)
+			{
+				WriteToLog("ERROR:GetFileHash4 error");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			if(strcmp(outSHA3, outSHA4) != 0)
+			{
+				WriteToLog("ERROR:文件hash值匹配失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			else
+			{
+				WriteToLog("DEBUG:文件hash值匹配成功");
+			}
+		}
+		//覆盖文件
+		for(int i=0;i < (int)orifileList.size();i++)
+		{
+			char l[MAX_PATH]= {0};
+			strcpy(l, orifileList[i].c_str());
+			char searech[MAX_PATH]={0};
+			strcpy(searech, searceshlist[i].c_str());
+			if(CopyFile(l, searech, FALSE) == 0)
+			{
+				WriteToLog("ERROR:覆盖失败");
+				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
+				if(code != 0)
+				{
+					WriteToLog("ERROR:上报失败");
+				}
+				else
+				{
+					WriteToLog("DEBUG:上报成功");
+				}
+				return;
+			}
+			else
+			{
+				WriteToLog("DEBUG:覆盖成功");
+			}
 		}
 	}
 	int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreOK",asreportId,result);
@@ -1320,8 +1473,6 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		WriteToLog("DEBUG:上报成功");
 		DeleteFile(zippath);
 	}
-
-
 	WriteToLog("DEBUG:上报按钮结束");
 	return;
 }
