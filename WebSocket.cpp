@@ -763,15 +763,7 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		}
 	}
 	
-	//正常匹配到盘符，返回给前端code:1000
-	Json::Value root;
-	root["code"] = Json::Value(1000);
-	string s=root.toStyledString();
-	char a[4096]= {0};
-	strcpy(a, s.c_str());
-	byte test[2048] = {0};
-	memcpy(test, a, strlen(a));
-	web.respondClient(sockClient, test, (int)strlen(a), true);
+
 
 	//得到下载路径，并按照UUID给下载包命名
 	string dirdcpuuid;
@@ -787,6 +779,17 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	}
 	else
 	{
+				
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			//WriteToLog(a);
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			WriteToLog("ERROR:下载失败");
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
@@ -803,6 +806,14 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	vector<string> zipfilelist;
 	if(UnCompressing(zipfilepath, zipfilelist) != 0)
 	{
+		Json::Value UpdateError;
+		UpdateError["code"] = Json::Value(1003);
+		string s=UpdateError.toStyledString();
+		char a[1024]= {0};
+		strcpy(a, s.c_str());
+		byte test[2048] = {0};
+		memcpy(test, a, strlen(a));
+		web.respondClient(sockClient, test, (int)strlen(a), true);
 		WriteToLog("ERROR:解压失败");
 		int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 		if(code != 0)
@@ -827,6 +838,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		if(UnCompressing(zippath, dirzipfilelist) != 0)
 		{
 			WriteToLog("ERROR:解压失败");
+
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -850,6 +871,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	if(zipfilelist.size() == 0)
 	{
 		WriteToLog("ERROR:解压目录文件为空");
+
+		Json::Value UpdateError;
+		UpdateError["code"] = Json::Value(1003);
+		string s=UpdateError.toStyledString();
+		char a[1024]= {0};
+		strcpy(a, s.c_str());
+		byte test[2048] = {0};
+		memcpy(test, a, strlen(a));
+		web.respondClient(sockClient, test, (int)strlen(a), true);
+
 		int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 		if(code != 0)
 		{
@@ -904,6 +935,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	if(searceshlist.size() == 0)
 	{
 		WriteToLog("ERROR:匹配查找的文件夹为空");
+
+		Json::Value UpdateError;
+		UpdateError["code"] = Json::Value(1003);
+		string s=UpdateError.toStyledString();
+		char a[1024]= {0};
+		strcpy(a, s.c_str());
+		byte test[2048] = {0};
+		memcpy(test, a, strlen(a));
+		web.respondClient(sockClient, test, (int)strlen(a), true);
+
 		int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 		if(code != 0)
 		{
@@ -925,6 +966,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		if(strlen(Error) != 0)
 		{
 			WriteToLog("ERROR:GetFileHash3 error");
+
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -942,6 +993,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		if(strlen(Error) != 0)
 		{
 			WriteToLog("ERROR:GetFileHash4 error");
+
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -956,6 +1017,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		if(strcmp(outSHA3, outSHA4) != 0)
 		{
 			WriteToLog("ERROR:文件hash值匹配失败");
+
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -981,6 +1052,16 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 		if(CopyFile(l, searech, FALSE) == 0)
 		{
 			WriteToLog("ERROR:文件覆盖失败");
+
+			Json::Value UpdateError;
+			UpdateError["code"] = Json::Value(1003);
+			string s=UpdateError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-UpdateFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1006,6 +1087,14 @@ void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient)
 	else
 	{
 		WriteToLog("DEBUG:分析成功");
+		Json::Value UpdateSucess;
+		UpdateSucess["code"] = Json::Value(1002);
+		string s=UpdateSucess.toStyledString();
+		char a[1024]= {0};
+		strcpy(a, s.c_str());
+		byte test[2048] = {0};
+		memcpy(test, a, strlen(a));
+		web.respondClient(sockClient, test, (int)strlen(a), true);
 	}
 	WriteToLog("DEBUG:文件分析完成");		
 	return;
@@ -1082,17 +1171,6 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			break;
 		}
 	}
-
-
-	Json::Value root;
-	root["code"] = Json::Value(1000);
-	string s=root.toStyledString();
-	char a[4096]= {0};
-	strcpy(a, s.c_str());
-	byte test[2048] = {0};
-	memcpy(test, a, strlen(a));
-	web.respondClient(sockClient, test, (int)strlen(a), true);
-
 	
 	//按照文件名称开始匹配，进行分析操作
 	vector<string> orifileList;  //定义一个存放结果文件名称的链表
@@ -1121,6 +1199,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		else
 		{
 				WriteToLog("ERROR:下载失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1137,6 +1225,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		if(UnCompressing(zipfilepath, zipfilelist) != 0)
 		{
 			WriteToLog("ERROR:解压失败");
+
+			Json::Value RestoreError;
+			RestoreError["code"] = Json::Value(1005);
+			string s=RestoreError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1160,6 +1258,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(UnCompressing(zippath, dirzipfilelist) != 0)
 			{
 				WriteToLog("ERROR:解压失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1179,6 +1287,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		if(zipfilelist.size() == 0)
 		{
 			WriteToLog("ERROR:解压目录文件为空");
+
+			Json::Value RestoreError;
+			RestoreError["code"] = Json::Value(1005);
+			string s=RestoreError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1228,6 +1346,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		if(searceshlist.size() == 0)
 		{
 			WriteToLog("ERROR:匹配查找的文件夹为空");
+
+			Json::Value RestoreError;
+			RestoreError["code"] = Json::Value(1005);
+			string s=RestoreError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1250,6 +1378,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strlen(Error) != 0)
 			{
 				WriteToLog("ERROR:GetFileHash3 error");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1267,6 +1405,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strlen(Error) != 0)
 			{
 				WriteToLog("ERROR:GetFileHash4 error");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1281,6 +1429,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strcmp(outSHA3, outSHA4) != 0)
 			{
 				WriteToLog("ERROR:文件hash值匹配失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1307,6 +1465,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(CopyFile(l, searech, FALSE) == 0)
 			{
 				WriteToLog("ERROR:文件覆盖失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1367,6 +1535,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 		if(searceshlist.size() == 0)
 		{
 			WriteToLog("ERROR:搜索文件搜索失败");
+
+			Json::Value RestoreError;
+			RestoreError["code"] = Json::Value(1005);
+			string s=RestoreError.toStyledString();
+			char a[1024]= {0};
+			strcpy(a, s.c_str());
+			byte test[2048] = {0};
+			memcpy(test, a, strlen(a));
+			web.respondClient(sockClient, test, (int)strlen(a), true);
+
 			int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 			if(code != 0)
 			{
@@ -1389,6 +1567,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strlen(Error) != 0)
 			{
 				WriteToLog("ERROR:GetFileHash3 error");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1406,6 +1594,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strlen(Error) != 0)
 			{
 				WriteToLog("ERROR:GetFileHash4 error");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1420,6 +1618,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(strcmp(outSHA3, outSHA4) != 0)
 			{
 				WriteToLog("ERROR:文件hash值匹配失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1446,6 +1654,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 			if(CopyFile(l, searech, FALSE) == 0)
 			{
 				WriteToLog("ERROR:覆盖失败");
+
+				Json::Value RestoreError;
+				RestoreError["code"] = Json::Value(1005);
+				string s=RestoreError.toStyledString();
+				char a[1024]= {0};
+				strcpy(a, s.c_str());
+				byte test[2048] = {0};
+				memcpy(test, a, strlen(a));
+				web.respondClient(sockClient, test, (int)strlen(a), true);
+
 				int code = sr.report_status_to_server(username,dcpuuid,"Report-RestoreFailed",asreportId,result);
 				if(code != 0)
 				{
@@ -1471,6 +1689,16 @@ void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient
 	else
 	{
 		WriteToLog("DEBUG:上报成功");
+
+		Json::Value RestoreSucess;
+		RestoreSucess["code"] = Json::Value(1004);
+		string s=RestoreSucess.toStyledString();
+		char a[1024]= {0};
+		strcpy(a, s.c_str());
+		byte test[2048] = {0};
+		memcpy(test, a, strlen(a));
+		web.respondClient(sockClient, test, (int)strlen(a), true);
+
 		DeleteFile(zippath);
 	}
 	WriteToLog("DEBUG:上报按钮结束");
@@ -1544,7 +1772,7 @@ void CreateDir(string &dir)
 {
 	if(_access(dir.c_str(),0) != -1)
 	{
-		WriteToLog("目录已经存在");
+		WriteToLog("DEBUG:目录已经存在");
 		return;
 	}
     int m = 0, n;
