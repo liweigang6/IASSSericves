@@ -1,4 +1,5 @@
 #pragma once
+#include "glog/logging.h"
 #include <windows.h>
 #include <string>
 #include <sstream>
@@ -10,20 +11,23 @@
 #include <vector>
 #include <process.h>
 #include <iterator>
-#include <curl/curl.h>
+#include "curl\curl.h"
 #include "StateReport.h"
 #include "dist\json\json.h"
 #include "dist\json\json-forwards.h"
+using namespace google;
+#pragma comment(lib, "glog.lib")
 #pragma comment(lib, "urlmon.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "lib_json.lib")
 #pragma comment(lib, "zlibwapi.lib")
 #pragma comment(lib, "libcurl.lib")
 using namespace std;
-//#define FILE_PATH "C:\\Program Files (x86)\\socket\\log.txt" //信息输出文件
+
 
 //The log function
-int WriteToLog(char* str);
+//int WriteToLog(char* str, int c);
+void InitGLog();
 
 //The thread function
 unsigned __stdcall WorkThread(LPVOID lpParam);
@@ -32,7 +36,7 @@ unsigned __stdcall WorkThread(LPVOID lpParam);
 //Function implementation function
 void UpdateConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient);
 void RestoreConfigFile(Json::Value &root, char *zipdlpathname, SOCKET sockClient);
-string GetStats();
+string GetStats(string path);
 
 //File manipulation function
 int UnCompressing(char *Unzfilepath, vector<string> &zipfilelist);
@@ -42,6 +46,7 @@ void FindFile(char* filename, char *filepath, vector<string> &filepathList);
 
 //Configuration processing function
 string ConfigFileRead(string &path);
+string ConfigVersion(string &path);
 void CreateDir(string &dir);
 void DeleteFile(char* lpPath);
 
